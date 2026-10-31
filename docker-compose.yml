@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: humdok-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: humdok_user
+      POSTGRES_PASSWORD: humdok_password_2026
+      POSTGRES_DB: humdok_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: humdok-backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      PORT: "8080"
+      DB_DRIVER: "postgres"
+      DATABASE_URL: "postgres://humdok_user:humdok_password_2026@postgres:5432/humdok_management?sslmode=disable"
+      JWT_SECRET: "humdok-management-secret-key-senior-2026"
+      CORS_ORIGIN: "http://localhost:3000"
+      PERIOD: "2026"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: humdok-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8080/api/v1"
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
